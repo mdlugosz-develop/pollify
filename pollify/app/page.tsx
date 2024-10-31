@@ -1,8 +1,8 @@
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { PollCard } from '@/components/poll-card'
-import { SearchBar } from '@/components/search-bar'
 import { UserSidebar } from '@/components/user-sidebar'
+import { RightSidebar } from '@/components/right-sidebar'
 import { CreatePollButton } from '@/components/create-poll-button'
 
 export const revalidate = 0
@@ -33,15 +33,13 @@ export default async function Home() {
     <div className="flex min-h-screen">
       <UserSidebar />
       
-      <main className="flex-1 transition-all duration-300 p-8 sidebar-content"> 
+      <main className="flex-1 transition-all duration-300 p-8 sidebar-content mr-80"> 
         <div className="max-w-5xl mx-auto">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold">Polls</h1>
             <CreatePollButton />
           </div>
           
-          <SearchBar className="mb-8" />
-
           <div className="grid gap-6">
             {polls.map((poll) => (
               <PollCard key={poll.id} poll={poll} />
@@ -49,6 +47,8 @@ export default async function Home() {
           </div>
         </div>
       </main>
+
+      <RightSidebar />
     </div>
   )
 }

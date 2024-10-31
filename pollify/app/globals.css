@@ -80,8 +80,17 @@ body {
 /* Add this at the end of your globals.css file */
 .sidebar-content {
   margin-left: 4rem; /* 16 = w-16 (collapsed state) */
+  margin-right: 3rem; /* 12 = w-12 (collapsed right sidebar) */
+  transition: all 0.3s ease;
 }
 
 [data-expanded="true"] + .sidebar-content {
   margin-left: 20rem; /* 80 = w-80 (expanded state) */
+}
+
+/* Add media query for larger screens */
+@media (min-width: 1024px) {
+  .sidebar-content {
+    margin-right: 20rem; /* 80 = w-80 (expanded right sidebar) */
+  }
 }

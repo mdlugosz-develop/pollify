@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, ChevronRight, User, Settings, UserCircle, LogOut } from 'lucide-react'
+import { ChevronLeft, ChevronRight, User, Settings, UserCircle, LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 
@@ -40,14 +40,14 @@ export function UserSidebar({ className }: UserSidebarProps) {
       )}
     >
       <Card className="h-full rounded-none relative flex flex-col">
-        <div className="absolute -right-6 top-4 z-50 w-12 h-12 flex items-center justify-center">
+        <div className="absolute -right-3 top-2 z-50 w-6 h-6">
           <Button 
             variant="ghost" 
             size="icon"
-            className="rounded-full bg-background border shadow-md hover:bg-accent hover:text-accent-foreground"
+            className="h-6 w-6 rounded-full bg-background border shadow-md hover:bg-accent hover:text-accent-foreground p-1"
             onClick={() => setIsCollapsed(!isCollapsed)}
           >
-            {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+            {isCollapsed ? <PanelLeftOpen size={12} /> : <PanelLeftClose size={12} />}
           </Button>
         </div>
 
