@@ -3,21 +3,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { Users } from 'lucide-react'
+import type { Poll } from '@/types'
 
 interface PollCardProps {
-  poll: {
-    id: string
-    title: string
-    description: string
-    created_at: string
-    users: { email: string }
-    poll_options: Array<{
+  poll: Poll & {
+    community?: {
       id: string
-      option_text: string
-      votes: number
-    }>
+      name: string
+    }
   }
 }
 
@@ -29,8 +26,42 @@ export function PollCard({ poll }: PollCardProps) {
     console.log('Voted for option:', optionId)
   }
 
+  // Generate a consistent color for the community badge
+  const getCommunityColor = (name: string) => {
+    const colors = [
+      'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20',
+      'bg-purple-500/10 text-purple-500 hover:bg-purple-500/20',
+      'bg-red-500/10 text-red-500 hover:bg-red-500/20',
+      'bg-green-500/10 text-green-500 hover:bg-green-500/20',
+      'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20',
+      'bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500/20',
+      'bg-pink-500/10 text-pink-500 hover:bg-pink-500/20'
+    ]
+    const index = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+    return colors[index % colors.length]
+  }
+
   return (
-    <Card className="hover:shadow-lg transition-shadow">
+    <Card className="hover:shadow-lg transition-shadow relative">
+      {poll.community && (
+        <Link 
+          href={`/community/${poll.community.id}`}
+          className="absolute top-4 right-4 z-10"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Badge 
+            variant="secondary"
+            className={cn(
+              "cursor-pointer transition-colors flex items-center gap-1",
+              getCommunityColor(poll.community.name)
+            )}
+          >
+            <Users className="h-3 w-3" />
+            {poll.community.name}
+          </Badge>
+        </Link>
+      )}
+      
       <CardHeader>
         <CardTitle>{poll.title}</CardTitle>
         <p className="text-sm text-muted-foreground">

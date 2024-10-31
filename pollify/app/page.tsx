@@ -10,7 +10,7 @@ export const revalidate = 0
 export default async function Home() {
   const supabase = createServerComponentClient({ cookies })
 
-  // Fetch all polls with their options and vote counts
+  // Fetch all polls with their options, votes, and community info
   const { data: polls, error } = await supabase
     .from('polls')
     .select(`
@@ -20,9 +20,21 @@ export default async function Home() {
         id,
         option_text,
         votes
+      ),
+      community_polls (
+        community:communities (
+          id,
+          name
+        )
       )
     `)
     .order('created_at', { ascending: false })
+
+  // Transform the data to flatten the community information
+  const transformedPolls = polls?.map(poll => ({
+    ...poll,
+    community: poll.community_polls?.[0]?.community || null
+  }))
 
   if (error) {
     console.error('Error fetching polls:', error)
@@ -41,7 +53,7 @@ export default async function Home() {
           </div>
           
           <div className="grid gap-6">
-            {polls.map((poll) => (
+            {transformedPolls?.map((poll) => (
               <PollCard key={poll.id} poll={poll} />
             ))}
           </div>
