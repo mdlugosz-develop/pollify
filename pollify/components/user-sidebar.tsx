@@ -5,8 +5,18 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, ChevronRight, User, Settings, UserCircle, LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
-import { useState } from 'react'
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  User, 
+  Settings, 
+  UserCircle, 
+  LogOut, 
+  PanelLeftClose, 
+  PanelLeftOpen,
+  Home
+} from 'lucide-react'
+import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 
 interface UserSidebarProps {
@@ -17,6 +27,20 @@ export function UserSidebar({ className }: UserSidebarProps) {
   const router = useRouter()
   const supabase = createClientComponentClient()
   const [isCollapsed, setIsCollapsed] = useState(false)
+
+  // Load collapsed state from localStorage on mount
+  useEffect(() => {
+    const savedState = localStorage.getItem('sidebarCollapsed')
+    if (savedState !== null) {
+      setIsCollapsed(JSON.parse(savedState))
+    }
+  }, [])
+
+  // Save collapsed state to localStorage whenever it changes
+  const handleCollapse = (collapsed: boolean) => {
+    setIsCollapsed(collapsed)
+    localStorage.setItem('sidebarCollapsed', JSON.stringify(collapsed))
+  }
 
   // Sample user data - replace with real user data later
   const sampleUser = {
@@ -45,7 +69,7 @@ export function UserSidebar({ className }: UserSidebarProps) {
             variant="ghost" 
             size="icon"
             className="h-6 w-6 rounded-full bg-background border shadow-md hover:bg-accent hover:text-accent-foreground p-1"
-            onClick={() => setIsCollapsed(!isCollapsed)}
+            onClick={() => handleCollapse(!isCollapsed)}
           >
             {isCollapsed ? <PanelLeftOpen size={12} /> : <PanelLeftClose size={12} />}
           </Button>
@@ -77,21 +101,52 @@ export function UserSidebar({ className }: UserSidebarProps) {
         <CardContent className="flex-1 flex flex-col items-center py-6">
           {!isCollapsed ? (
             <div className="space-y-4 w-full">
-              <Button variant="outline" className="w-full justify-start" onClick={() => router.push('/profile')}>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start" 
+                onClick={() => router.push('/')}
+              >
+                <Home className="mr-2 h-4 w-4" />
+                Home
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start" 
+                onClick={() => router.push('/profile')}
+              >
                 <UserCircle className="mr-2 h-4 w-4" />
                 Profile
               </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => router.push('/settings')}>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start" 
+                onClick={() => router.push('/settings')}
+              >
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
               </Button>
             </div>
           ) : (
             <div className="flex flex-col items-center space-y-4">
-              <Button variant="ghost" size="icon" onClick={() => router.push('/profile')}>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => router.push('/')}
+              >
+                <Home className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => router.push('/profile')}
+              >
                 <UserCircle className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => router.push('/settings')}>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => router.push('/settings')}
+              >
                 <Settings className="h-4 w-4" />
               </Button>
             </div>
