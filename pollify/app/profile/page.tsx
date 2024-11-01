@@ -7,24 +7,33 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { User, Mail, Calendar } from "lucide-react"
+import { redirect } from 'next/navigation'
 
 export const revalidate = 0
 
 export default async function Profile() {
   const supabase = createServerComponentClient({ cookies })
-
-  // TODO: Replace with real user data
-  const sampleUser = {
-    name: "John Doe",
-    email: "john@example.com",
-    avatarUrl: "https://github.com/shadcn.png",
-    joinDate: "January 2024",
-    pollsCreated: 15,
-    totalVotes: 234
+  
+  // Get authenticated user
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
+  
+  if (!user) {
+    redirect('/login')
   }
 
-  // Fetch user's polls (using sample data for now)
-  const { data: polls, error } = await supabase
+  // Fetch user profile data
+  const { data: profile, error: profileError } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile) {
+    return <div>Error loading profile</div>
+  }
+
+  // Fetch user's polls with vote counts
+  const { data: polls, error: pollsError } = await supabase
     .from('polls')
     .select(`
       *,
@@ -35,8 +44,15 @@ export default async function Profile() {
         votes
       )
     `)
+    .eq('user_id', user.id)
     .order('created_at', { ascending: false })
     .limit(5)
+
+  // Calculate total votes across all polls
+  const totalVotes = polls?.reduce((sum, poll) => {
+    const pollVotes = poll.poll_options.reduce((total: number, option: any) => total + (option.votes || 0), 0)
+    return sum + pollVotes
+  }, 0) || 0
 
   return (
     <div className="flex min-h-screen">
@@ -49,7 +65,7 @@ export default async function Profile() {
             <CardContent className="pt-6">
               <div className="flex items-start gap-6">
                 <Avatar className="h-24 w-24">
-                  <AvatarImage src={sampleUser.avatarUrl} alt={sampleUser.name} />
+                  <AvatarImage src={profile.avatar_url} alt={profile.full_name || user.email} />
                   <AvatarFallback>
                     <User className="h-12 w-12" />
                   </AvatarFallback>
@@ -58,14 +74,14 @@ export default async function Profile() {
                 <div className="flex-1">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h1 className="text-2xl font-bold">{sampleUser.name}</h1>
+                      <h1 className="text-2xl font-bold">{profile.full_name || user.email}</h1>
                       <div className="flex items-center gap-2 text-muted-foreground mt-1">
                         <Mail className="h-4 w-4" />
-                        <span>{sampleUser.email}</span>
+                        <span>{user.email}</span>
                       </div>
                       <div className="flex items-center gap-2 text-muted-foreground mt-1">
                         <Calendar className="h-4 w-4" />
-                        <span>Joined {sampleUser.joinDate}</span>
+                        <span>Joined {new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
                       </div>
                     </div>
                     <Button>Edit Profile</Button>
@@ -73,11 +89,11 @@ export default async function Profile() {
 
                   <div className="flex gap-6 mt-6">
                     <div>
-                      <p className="text-2xl font-bold">{sampleUser.pollsCreated}</p>
+                      <p className="text-2xl font-bold">{polls?.length || 0}</p>
                       <p className="text-muted-foreground">Polls Created</p>
                     </div>
                     <div>
-                      <p className="text-2xl font-bold">{sampleUser.totalVotes}</p>
+                      <p className="text-2xl font-bold">{totalVotes}</p>
                       <p className="text-muted-foreground">Total Votes</p>
                     </div>
                   </div>
@@ -91,7 +107,11 @@ export default async function Profile() {
             <h2 className="text-xl font-semibold mb-4">Recent Polls</h2>
             <div className="grid gap-6">
               {polls?.map((poll) => (
-                <PollCard key={poll.id} poll={poll} />
+                <PollCard 
+                  key={poll.id} 
+                  poll={poll} 
+                  totalVotes={poll.poll_options.reduce((sum: number, option: any) => sum + (option.votes || 0), 0)}
+                />
               ))}
             </div>
           </div>
