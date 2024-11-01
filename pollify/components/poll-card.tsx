@@ -2,15 +2,26 @@
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { VoteButton } from "@/components/vote-button"
+import { Button } from "@/components/ui/button"
+import { Trash2 } from "lucide-react"
 import type { Poll } from "@/types"
+import { DeletePollDialog } from "@/components/delete-poll-dialog"
 
 interface PollCardProps {
   poll: Poll
-  userVote?: string | null // The ID of the option the user voted for
+  userVote?: string | null
   totalVotes: number
+  showDeleteButton?: boolean
+  userId?: string
 }
 
-export function PollCard({ poll, userVote, totalVotes }: PollCardProps) {
+export function PollCard({ 
+  poll, 
+  userVote, 
+  totalVotes,
+  showDeleteButton = false,
+  userId
+}: PollCardProps) {
   const hasVoted = !!userVote
   
   return (
@@ -23,8 +34,13 @@ export function PollCard({ poll, userVote, totalVotes }: PollCardProps) {
               <p className="text-muted-foreground mt-1">{poll.description}</p>
             )}
           </div>
-          <div className="text-sm text-muted-foreground">
-            by {poll.users.email.split('@')[0]}
+          <div className="flex items-center gap-4">
+            <div className="text-sm text-muted-foreground">
+              by {poll.users.email.split('@')[0]}
+            </div>
+            {showDeleteButton && userId && (
+              <DeletePollDialog pollId={poll.id} userId={userId} />
+            )}
           </div>
         </div>
       </CardHeader>

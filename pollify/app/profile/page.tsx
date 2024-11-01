@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { User, Mail, Calendar } from "lucide-react"
 import { redirect } from 'next/navigation'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 
 export const revalidate = 0
 
@@ -111,8 +112,15 @@ export default async function Profile() {
                   key={poll.id} 
                   poll={poll} 
                   totalVotes={poll.poll_options.reduce((sum: number, option: any) => sum + (option.votes || 0), 0)}
+                  showDeleteButton={true}
+                  userId={user.id}
                 />
               ))}
+              {polls?.length === 0 && (
+                <p className="text-muted-foreground text-center py-8">
+                  You haven't created any polls yet.
+                </p>
+              )}
             </div>
           </div>
         </div>
