@@ -11,6 +11,7 @@ import { notFound } from 'next/navigation'
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { CreatePollForm } from '@/components/create-poll-form'
 import { CreatePollDialog } from '@/components/create-poll-dialog'
+import { JoinCommunityButton } from '@/components/join-community-button'
 
 interface PageProps {
   params: {
@@ -98,6 +99,16 @@ export default async function CommunityPage({ params }: PageProps) {
     return colors[index % colors.length]
   }
 
+  // Check if current user is a member
+  const { data: membership } = user ? await supabase
+    .from('community_members')
+    .select('*')
+    .eq('community_id', params.id)
+    .eq('user_id', user.id)
+    .single() : { data: null }
+
+  const isMember = !!membership
+
   return (
     <div className="flex min-h-screen">
       <UserSidebar />
@@ -122,10 +133,10 @@ export default async function CommunityPage({ params }: PageProps) {
                         {community.description}
                       </p>
                     </div>
-                    <Button>
-                      <Users className="mr-2 h-4 w-4" />
-                      Join Community
-                    </Button>
+                    <JoinCommunityButton 
+                      communityId={params.id}
+                      initialIsMember={isMember}
+                    />
                   </div>
 
                   <div className="flex gap-6 mt-6">

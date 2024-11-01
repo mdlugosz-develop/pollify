@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { User, Mail, Calendar } from "lucide-react"
 import { redirect } from 'next/navigation'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import Link from 'next/link'
 
 export const revalidate = 0
 
@@ -54,6 +55,21 @@ export default async function Profile() {
     const pollVotes = poll.poll_options.reduce((total: number, option: any) => total + (option.votes || 0), 0)
     return sum + pollVotes
   }, 0) || 0
+
+  // Replace the existing communities query with this:
+  const { data: userCommunities, error: communitiesError } = await supabase
+    .from('community_members')
+    .select(`
+      community_id,
+      created_at,
+      communities:community_id (
+        id,
+        name,
+        description,
+        created_at
+      )
+    `)
+    .eq('user_id', user.id)
 
   return (
     <div className="flex min-h-screen">
@@ -123,6 +139,37 @@ export default async function Profile() {
               )}
             </div>
           </div>
+
+          {/* Add this new Communities section */}
+          <div>
+            <h2 className="text-xl font-semibold mb-4">My Communities</h2>
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+              {userCommunities?.map((membership) => {
+                const community = membership.communities
+                return (
+                  <Link href={`/community/${community.id}`} key={community.id}>
+                    <Card className="hover:bg-accent transition-colors">
+                      <CardHeader>
+                        <CardTitle className="text-lg">{community.name}</CardTitle>
+                        <p className="text-sm text-muted-foreground">{community.description}</p>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-sm text-muted-foreground">
+                          <p>Joined {new Date(membership.created_at).toLocaleDateString()}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                )
+              })}
+              {(!userCommunities || userCommunities.length === 0) && (
+                <p className="text-muted-foreground text-center py-8 col-span-2">
+                  You haven't joined any communities yet.
+                </p>
+              )}
+            </div>
+          </div>
+
         </div>
       </main>
 
