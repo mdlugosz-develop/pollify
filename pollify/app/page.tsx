@@ -10,7 +10,10 @@ export const revalidate = 0
 export default async function Home() {
   const supabase = createServerComponentClient({ cookies })
 
-  // Fetch all polls
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // Fetch all polls with their options and vote counts
   const { data: polls, error: pollsError } = await supabase
     .from('polls')
     .select(`
@@ -20,7 +23,8 @@ export default async function Home() {
         id,
         option_text,
         votes
-      )
+      ),
+      votes:votes(count)
     `)
     .order('created_at', { ascending: false })
 
@@ -28,6 +32,15 @@ export default async function Home() {
     console.error('Error fetching polls:', pollsError)
     return <div>Error loading polls</div>
   }
+
+  // Fetch user's votes if logged in
+  const { data: userVotes } = user ? await supabase
+    .from('votes')
+    .select('poll_id, option_id')
+    .eq('user_id', user.id) : { data: [] }
+
+  // Create a map of poll_id to voted option_id
+  const voteMap = new Map(userVotes?.map(vote => [vote.poll_id, vote.option_id]))
 
   return (
     <div className="flex min-h-screen">
@@ -45,7 +58,12 @@ export default async function Home() {
           {polls && polls.length > 0 ? (
             <div className="grid gap-6">
               {polls.map((poll) => (
-                <PollCard key={poll.id} poll={poll} />
+                <PollCard 
+                  key={poll.id} 
+                  poll={poll}
+                  userVote={voteMap.get(poll.id)}
+                  totalVotes={poll.votes[0]?.count || 0}
+                />
               ))}
             </div>
           ) : (

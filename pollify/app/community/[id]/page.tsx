@@ -23,6 +23,9 @@ export const revalidate = 0
 export default async function CommunityPage({ params }: PageProps) {
   const supabase = createServerComponentClient({ cookies })
 
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser()
+
   // Fetch community details
   const { data: community, error: communityError } = await supabase
     .from('communities')
@@ -59,7 +62,8 @@ export default async function CommunityPage({ params }: PageProps) {
             id,
             option_text,
             votes
-          )
+          ),
+          votes:votes(count)
         `)
         .in('id', pollIds)
         .order('created_at', { ascending: false })
@@ -69,6 +73,15 @@ export default async function CommunityPage({ params }: PageProps) {
     console.error('Error fetching polls:', pollsError)
     return <div>Error loading polls</div>
   }
+
+  // Fetch user's votes if logged in
+  const { data: userVotes } = user ? await supabase
+    .from('votes')
+    .select('poll_id, option_id')
+    .eq('user_id', user.id) : { data: [] }
+
+  // Create a map of poll_id to voted option_id
+  const voteMap = new Map(userVotes?.map(vote => [vote.poll_id, vote.option_id]))
 
   // Generate a consistent color for the community
   const getCommunityColor = (name: string) => {
@@ -140,7 +153,12 @@ export default async function CommunityPage({ params }: PageProps) {
             {polls && polls.length > 0 ? (
               <div className="grid gap-6">
                 {polls.map((poll) => (
-                  <PollCard key={poll.id} poll={poll} />
+                  <PollCard 
+                    key={poll.id} 
+                    poll={poll}
+                    userVote={voteMap?.get(poll.id)}
+                    totalVotes={poll.votes[0]?.count || 0}
+                  />
                 ))}
               </div>
             ) : (

@@ -18,23 +18,53 @@ import {
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/contexts/auth-context'
 
 interface UserSidebarProps {
   className?: string
+}
+
+interface UserData {
+  id: string
+  email: string
+  created_at: string
 }
 
 export function UserSidebar({ className }: UserSidebarProps) {
   const router = useRouter()
   const supabase = createClientComponentClient()
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [userData, setUserData] = useState<UserData | null>(null)
+  const { user, signOut } = useAuth()
 
-  // Load collapsed state from localStorage on mount
   useEffect(() => {
+    // Load collapsed state from localStorage on mount
     const savedState = localStorage.getItem('sidebarCollapsed')
     if (savedState !== null) {
       setIsCollapsed(JSON.parse(savedState))
     }
   }, [])
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (user) {
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+
+        if (error) {
+          console.error('Error fetching user data:', error)
+          return
+        }
+
+        setUserData(data)
+      }
+    }
+
+    fetchUserData()
+  }, [user, supabase])
 
   // Save collapsed state to localStorage whenever it changes
   const handleCollapse = (collapsed: boolean) => {
@@ -42,16 +72,15 @@ export function UserSidebar({ className }: UserSidebarProps) {
     localStorage.setItem('sidebarCollapsed', JSON.stringify(collapsed))
   }
 
-  // Sample user data - replace with real user data later
-  const sampleUser = {
-    name: "John Doe",
-    email: "john@example.com",
-    avatarUrl: "https://github.com/shadcn.png" // Sample avatar URL
+  const handleSignOut = async () => {
+    await signOut()
+    router.push('/login')
   }
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.refresh()
+  // Get first letter of email for avatar fallback
+  const getAvatarFallback = () => {
+    if (!userData?.email) return '?'
+    return userData.email.charAt(0).toUpperCase()
   }
 
   return (
@@ -84,15 +113,18 @@ export function UserSidebar({ className }: UserSidebarProps) {
             isCollapsed ? "flex-col gap-2" : ""
           )}>
             <Avatar className="h-12 w-12">
-              <AvatarImage src={sampleUser.avatarUrl} alt={sampleUser.name} />
               <AvatarFallback>
-                <User className="h-6 w-6" />
+                {getAvatarFallback()}
               </AvatarFallback>
             </Avatar>
-            {!isCollapsed && (
+            {!isCollapsed && userData && (
               <div className="space-y-1">
-                <h2 className="font-semibold leading-none">{sampleUser.name}</h2>
-                <p className="text-sm text-muted-foreground">{sampleUser.email}</p>
+                <h2 className="font-semibold leading-none">
+                  {userData.email.split('@')[0]}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {userData.email}
+                </p>
               </div>
             )}
           </div>
