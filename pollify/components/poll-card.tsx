@@ -6,8 +6,21 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
-import { Users } from 'lucide-react'
+import { Users, Trash2 } from 'lucide-react'
 import type { Poll } from '@/types'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { useRouter } from 'next/navigation'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 interface PollCardProps {
   poll: Poll & {
@@ -19,11 +32,30 @@ interface PollCardProps {
 }
 
 export function PollCard({ poll }: PollCardProps) {
+  const router = useRouter()
+  const supabase = createClientComponentClient()
   const totalVotes = poll.poll_options.reduce((sum, option) => sum + option.votes, 0)
 
   const handleVote = async (optionId: string) => {
     // TODO: Implement voting functionality with Supabase
     console.log('Voted for option:', optionId)
+  }
+
+  const handleDelete = async () => {
+    try {
+      // Delete the poll
+      const { error } = await supabase
+        .from('polls')
+        .delete()
+        .eq('id', poll.id)
+
+      if (error) throw error
+
+      // Refresh the page to show updated list
+      router.refresh()
+    } catch (error) {
+      console.error('Error deleting poll:', error)
+    }
   }
 
   // Generate a consistent color for the community badge
@@ -43,24 +75,55 @@ export function PollCard({ poll }: PollCardProps) {
 
   return (
     <Card className="hover:shadow-lg transition-shadow relative">
-      {poll.community && (
-        <Link 
-          href={`/community/${poll.community.id}`}
-          className="absolute top-4 right-4 z-10"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Badge 
-            variant="secondary"
-            className={cn(
-              "cursor-pointer transition-colors flex items-center gap-1",
-              getCommunityColor(poll.community.name)
-            )}
+      <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+        {poll.community && (
+          <Link 
+            href={`/community/${poll.community.id}`}
+            onClick={(e) => e.stopPropagation()}
           >
-            <Users className="h-3 w-3" />
-            {poll.community.name}
-          </Badge>
-        </Link>
-      )}
+            <Badge 
+              variant="secondary"
+              className={cn(
+                "cursor-pointer transition-colors flex items-center gap-1",
+                getCommunityColor(poll.community.name)
+              )}
+            >
+              <Users className="h-3 w-3" />
+              {poll.community.name}
+            </Badge>
+          </Link>
+        )}
+        
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Poll</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this poll? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
       
       <CardHeader>
         <CardTitle>{poll.title}</CardTitle>

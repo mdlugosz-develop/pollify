@@ -8,6 +8,9 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Users } from "lucide-react"
 import { notFound } from 'next/navigation'
+import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { CreatePollForm } from '@/components/create-poll-form'
+import { CreatePollDialog } from '@/components/create-poll-dialog'
 
 interface PageProps {
   params: {
@@ -131,7 +134,7 @@ export default async function CommunityPage({ params }: PageProps) {
           <div>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold">Community Polls</h2>
-              <Button>Create Poll</Button>
+              <CreatePollDialog communityId={params.id} />
             </div>
             
             {polls && polls.length > 0 ? (

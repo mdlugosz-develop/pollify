@@ -1,17 +1,17 @@
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { PollCard } from '@/components/poll-card'
+import { CreatePollDialog } from '@/components/create-poll-dialog'
 import { UserSidebar } from '@/components/user-sidebar'
 import { RightSidebar } from '@/components/right-sidebar'
-import { CreatePollButton } from '@/components/create-poll-button'
 
 export const revalidate = 0
 
 export default async function Home() {
   const supabase = createServerComponentClient({ cookies })
 
-  // Fetch all polls with their options, votes, and community info
-  const { data: polls, error } = await supabase
+  // Fetch all polls
+  const { data: polls, error: pollsError } = await supabase
     .from('polls')
     .select(`
       *,
@@ -20,24 +20,12 @@ export default async function Home() {
         id,
         option_text,
         votes
-      ),
-      community_polls (
-        community:communities (
-          id,
-          name
-        )
       )
     `)
     .order('created_at', { ascending: false })
 
-  // Transform the data to flatten the community information
-  const transformedPolls = polls?.map(poll => ({
-    ...poll,
-    community: poll.community_polls?.[0]?.community || null
-  }))
-
-  if (error) {
-    console.error('Error fetching polls:', error)
+  if (pollsError) {
+    console.error('Error fetching polls:', pollsError)
     return <div>Error loading polls</div>
   }
 
@@ -45,18 +33,26 @@ export default async function Home() {
     <div className="flex min-h-screen">
       <UserSidebar />
       
-      <main className="flex-1 transition-all duration-300 p-8 sidebar-content mr-80"> 
-        <div className="max-w-5xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold">Polls</h1>
-            <CreatePollButton />
+      <main className="flex-1 transition-all duration-300 p-8 sidebar-content">
+        <div className="max-w-5xl mx-auto space-y-8">
+          {/* Header section */}
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold">Recent Polls</h1>
+            <CreatePollDialog buttonText="Create New Poll" />
           </div>
-          
-          <div className="grid gap-6">
-            {transformedPolls?.map((poll) => (
-              <PollCard key={poll.id} poll={poll} />
-            ))}
-          </div>
+
+          {/* Polls grid */}
+          {polls && polls.length > 0 ? (
+            <div className="grid gap-6">
+              {polls.map((poll) => (
+                <PollCard key={poll.id} poll={poll} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center text-muted-foreground py-8">
+              No polls have been created yet. Be the first to create one!
+            </div>
+          )}
         </div>
       </main>
 
